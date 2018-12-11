@@ -1,5 +1,10 @@
-require "simple_notifications/version"
+require 'simple_notifications/version'
+require 'simple_notifications/core'
 
 module SimpleNotifications
-  # Your code goes here...
+  def self.included(base)
+    base.extend Core
+  end
 end
+
+ActiveRecord::Base.send(:include, SimpleNotifications)

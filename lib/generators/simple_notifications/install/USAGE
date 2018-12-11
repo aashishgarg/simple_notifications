@@ -1,0 +1,10 @@
+Description:
+    1. Creates an initializer file for simple_notifications.
+    2. Creates a migration file file for recording the data of notifications receiver and sender.
+
+Example:
+    rails generate simple_notifications:install
+
+    This will create:
+        config/simple_notifications.rb
+        db/migrate/{time_stamp}_create_simple_notifications.rb

@@ -1,0 +1,1 @@
+# Initializer file for simple_notifications
