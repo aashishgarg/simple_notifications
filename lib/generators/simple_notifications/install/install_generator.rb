@@ -1,5 +1,5 @@
 module SimpleNotifications
-  class InstallGenerator < Rails::Generators::NamedBase
+  class InstallGenerator < Rails::Generators::Base
     source_root File.expand_path('templates', __dir__)
 
     def copy_initializer_file

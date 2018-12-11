@@ -4,3 +4,5 @@ require_relative 'simple_notifications/app/models/simple_notification'
 
 module SimpleNotifications
 end
+
+# ActiveRecord::base.send(:include, SimpleNotifications)
