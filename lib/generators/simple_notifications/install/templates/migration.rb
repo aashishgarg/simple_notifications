@@ -10,6 +10,11 @@ class CreateSimpleNotifications < ActiveRecord::Migration[5.2]
       t.timestamps
     end
 
+    create_table :notifications_receivers, id: false do |t|
+      t.references :notifications, index: true
+      t.references :receivers, index: true
+    end
+
     add_index(:simple_notifications, [:receiver_id, :receiver_type])
     add_index(:simple_notifications, [:sender_id, :sender_type])
     add_index(:simple_notifications, [:entity_id, :entity_type])

@@ -3,9 +3,10 @@ module SimpleNotifications
     self.table_name = 'simple_notifications'
 
     # --- Associations --- #
-    belongs_to :receiver, polymorphic: true
     belongs_to :sender, polymorphic: true
     belongs_to :entity, polymorphic: true
+
+    has_and_belongs_to_many :receivers, join_table: 'notifications_receivers'
 
     # --- validations --- #
     validates :message, presence: true, length: {minimum: 1, maximum: 199}
