@@ -1,12 +1,10 @@
 # SimpleNotifications
 
-Welcome to your new gem! In this directory, you'll find the files you need to be able to package up your Ruby library into a gem. Put your Ruby code in the file `lib/simple_notifications`. To experiment with that code, run `bin/console` for an interactive prompt.
+A very simple gem providing the notifications functionality to any model in a Rails application.
 
-TODO: Delete this and the text above, and describe your gem
+### Installation
 
-## Installation
-
-Add this line to your application's Gemfile:
+Add following line to your gemfile
 
 ```ruby
 gem 'simple_notifications'
@@ -20,19 +18,62 @@ Or install it yourself as:
 
     $ gem install simple_notifications
 
-## Usage
+### Usage
 
-TODO: Write usage instructions here
+Run the simple notifications generator
 
-## Development
+```ruby
+rails generate simple_notification:install
+```
+This will generate two files in your rails project
 
-After checking out the repo, run `bin/setup` to install dependencies. Then, run `rake spec` to run the tests. You can also run `bin/console` for an interactive prompt that will allow you to experiment.
+* simple_notifications.rb - An initializer file.
+* Migration file - Required for recording notifications.
 
-To install this gem onto your local machine, run `bundle exec rake install`. To release a new version, update the version number in `version.rb`, and then run `bundle exec rake release`, which will create a git tag for the version, push git commits and tags, and push the `.gem` file to [rubygems.org](https://rubygems.org).
+Then run
+
+```ruby
+rails db:migrate
+``` 
+
+Add following line to the model for which notifications functionality is required
+
+```ruby
+notify sender: :author, receivers: :followers
+``` 
+
+Here :sender and :followers should be associations for the model which needs to be notified.
+
+### Methods
+Suppose **Post** is the notified model and **author** is the sender association and **followers** is the receiver association.
+Then following methods are available
+
+* Post.notified?
+* Post.notification_validated?
+
+Methods for the **post** object
+
+* post.notifications
+* post.notifiers
+* post.notificants
+
+Methods for **author** object
+
+* author.sent_notifications
+
+Methods for **follower** object
+
+* follower.received_notifications
+
+Notification Model
+
+* SimpleNotifications::Record
+* SimpleNotifications::Delivery
 
 ## Contributing
 
-Bug reports and pull requests are welcome on GitHub at https://github.com/[USERNAME]/simple_notifications. This project is intended to be a safe, welcoming space for collaboration, and contributors are expected to adhere to the [Contributor Covenant](http://contributor-covenant.org) code of conduct.
+Bug reports and pull requests are welcome on GitHub at https://github.com/aashishgarg/simple_notifications. 
+This project is intended to be a safe, welcoming space for collaboration, and contributors are expected to adhere to the [Contributor Covenant](http://contributor-covenant.org) code of conduct.
 
 ## License
 

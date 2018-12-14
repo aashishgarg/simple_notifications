@@ -68,7 +68,3 @@ module SimpleNotifications
     end
   end
 end
-
-# Rails.application.eager_load!
-# ProductClass.first.products.create(name: 'asdfsdfs')
-# Product.notified?
