@@ -70,6 +70,18 @@ Methods for **follower** object
 
 * follower.received_notifications
 
+Skipping Notification
+
+```ruby
+Post.create(content: '123', notify: false)
+```
+
+Custom Notification message
+
+```ruby
+Post.create(content: '123', message: 'My custom notification message')
+```
+
 Notification Model
 
 * SimpleNotifications::Record
