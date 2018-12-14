@@ -28,11 +28,21 @@ module SimpleNotifications
       @@receivers = options[:receivers]
       raise 'SimpleNotifications::SenderReceiversError' unless notification_validated?
 
+      add_sender_class_features
+      add_receiver_class_features
+      add_notified_class_features
+
+      @@notified_flag = true
+    end
+
+    def add_sender_class_features
       # Define association for sender model
       @@sender.class.class_eval do
         has_many :sent_notifications, class_name: 'SimpleNotifications::Record', as: :sender
       end unless @@sender.class == NilClass
+    end
 
+    def add_receiver_class_features
       # Define association for receiver model
       @@receivers.collect(&:class).flatten.uniq.each do |base|
         base.class_eval do
@@ -40,30 +50,37 @@ module SimpleNotifications
           has_many :received_notifications, through: :deliveries, source: :simple_notification
         end unless base.class == NilClass
       end
+    end
 
+    def add_notified_class_features
       self.class_eval do
+        attr_accessor :message, :notify
         # Define association for the notified model
         has_many :notifications, class_name: 'SimpleNotifications::Record', as: :entity
         has_many :notifiers, through: :notifications, source: :sender, source_type: @@sender.class.name
         has_many :notificants, through: :notifications, source: :receivers
 
-        # Callbacks for notified model
-        after_create_commit :create_notification
+        after_create_commit :create_notification, if: proc { @notify.nil? || !!@notify }
+        after_update_commit :update_notification, if: proc { @notify.nil? || !!@notify }
 
         private
 
-        def message(entity, sender)
-          "#{entity.class.name} #{entity.name} created by #{sender.id}"
+        def default_message(entity, sender, action)
+          @message || "#{entity.class.name} #{entity.name} #{action} by #{sender.id}"
         end
 
         def create_notification
-          notification = SimpleNotifications::Record.new(entity: self, sender: @@sender, message: message(self, @@sender))
+          notification = SimpleNotifications::Record.new(entity: self, sender: @@sender, message: default_message(self, @@sender, 'created'))
+          @@receivers.each {|receiver| notification.deliveries.build(receiver: receiver)}
+          notification.save
+        end
+
+        def update_notification
+          notification = SimpleNotifications::Record.new(entity: self, sender: @@sender, message: default_message(self, @@sender, 'updated'))
           @@receivers.each {|receiver| notification.deliveries.build(receiver: receiver)}
           notification.save
         end
       end
-
-      @@notified_flag = true
     end
   end
 end
