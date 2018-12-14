@@ -23,7 +23,7 @@ Or install it yourself as:
 Run the simple notifications generator
 
 ```ruby
-rails generate simple_notification:install
+rails generate simple_notifications:install
 ```
 This will generate two files in your rails project
 
@@ -41,6 +41,11 @@ Add following line to the model for which notifications functionality is require
 ```ruby
 notify sender: :author, receivers: :followers
 ``` 
+Or you can provide ActiveRecord::Base object or ActiveRecord::Relation objects as 
+
+```ruby
+notify sender: User.first, receivers: User.all
+```
 
 Here :sender and :followers should be associations for the model which needs to be notified.
 
