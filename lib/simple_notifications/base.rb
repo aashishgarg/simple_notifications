@@ -26,8 +26,16 @@ module SimpleNotifications
       @@sender = options[:sender]
       @@receivers = options[:receivers]
       raise 'SimpleNotifications::SenderReceiversError' unless notification_validated?
+
       define_associations
+
       self.class_eval do
+        # --- Associations --- #
+        has_many :notifications, class_name: 'SimpleNotifications::Record', as: :entity
+        has_many :notifiers, through: :notifications, source: :sender, source_type: @@sender.class.name
+        has_many :notificants, through: :notifications, source: :receivers
+
+        # --- Callbacks --- #
         after_create_commit :create_notification
 
         private
