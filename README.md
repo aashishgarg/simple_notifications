@@ -61,6 +61,8 @@ Methods for the **post** object
 * post.notifications
 * post.notifiers
 * post.notificants
+* post.read_notificants
+* post.unread_notificants
 
 Methods for **author** object
 
@@ -70,22 +72,26 @@ Methods for **follower** object
 
 * follower.received_notifications
 
-Skipping Notification
+### Skipping Notification
 
 ```ruby
 Post.create(content: '123', notify: false)
 ```
 
-Custom Notification message
+### Custom Notification message
 
 ```ruby
 Post.create(content: '123', message: 'My custom notification message')
 ```
 
-Notification Model
+### Notification Models
 
 * SimpleNotifications::Record
 * SimpleNotifications::Delivery
+
+### Scopes
+* SimpleNotifications::Record.read
+* SimpleNotifications::Record.unread
 
 ## Contributing
 

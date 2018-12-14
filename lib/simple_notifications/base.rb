@@ -59,14 +59,22 @@ module SimpleNotifications
         has_many :notifications, class_name: 'SimpleNotifications::Record', as: :entity
         has_many :notifiers, through: :notifications, source: :sender, source_type: @@sender.class.name
         has_many :notificants, through: :notifications, source: :receivers
+        has_many :read_deliveries, through: :notifications, source: :read_deliveries
+        has_many :unread_deliveries, through: :notifications, source: :unread_deliveries
+        has_many :read_notificants, through: :read_deliveries, source: :receiver, source_type: 'User'
+        has_many :unread_notificants, through: :unread_deliveries, source: :receiver, source_type: 'User'
 
         after_create_commit :create_notification, if: proc { @notify.nil? || !!@notify }
         after_update_commit :update_notification, if: proc { @notify.nil? || !!@notify }
 
+        def notified?
+          !notifications.blank?
+        end
+
         private
 
         def default_message(entity, sender, action)
-          @message || "#{entity.class.name} #{entity.name} #{action} by #{sender.id}"
+          @message || "#{entity.class.name} #{entity.name} #{action}."
         end
 
         def create_notification

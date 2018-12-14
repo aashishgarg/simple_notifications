@@ -12,7 +12,7 @@ class CreateSimpleNotifications < ActiveRecord::Migration[5.2]
       t.references :simple_notification
       t.references :receiver, polymorphic: true
       t.boolean :is_delivered, default: false
-      t.string :message
+      t.boolean :is_read, default: false
 
       t.timestamps
     end
