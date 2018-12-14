@@ -5,8 +5,8 @@ module SimpleNotifications
     # --- Associations --- #
     belongs_to :sender, polymorphic: true
     belongs_to :entity, polymorphic: true
-
-    has_and_belongs_to_many :receivers, join_table: 'notifications_receivers'
+    has_many :deliveries, class_name: 'SimpleNotifications::Delivery', inverse_of: :simple_notification,
+             dependent: :destroy
 
     # --- validations --- #
     validates :message, presence: true, length: {minimum: 1, maximum: 199}
