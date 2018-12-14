@@ -5,7 +5,7 @@ module SimpleNotifications
     # --- Associations --- #
     belongs_to :sender, polymorphic: true
     belongs_to :entity, polymorphic: true
-    has_many :deliveries, class_name: 'SimpleNotifications::Delivery', inverse_of: :simple_notification,
+    has_many :deliveries, class_name: 'SimpleNotifications::Delivery', inverse_of: :simple_notification, foreign_key: :simple_notification_id,
              dependent: :destroy
 
     # --- validations --- #

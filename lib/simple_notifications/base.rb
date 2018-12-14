@@ -37,29 +37,30 @@ module SimpleNotifications
         end
 
         def create_notification
-          SimpleNotifications::Record.create(entity: self, sender: @@sender, receivers: @@receiver, message: message(self, @@sender))
+          notification = SimpleNotifications::Record.new(entity: self, sender: @@sender, message: message(self, @@sender))
+          @@receivers.each {|receiver| notification.deliveries.build(receiver: receiver)}
+          notification.save
         end
       end
 
       @@notified_flag = true
     end
 
-    def sender_receiver_classes
-      [@@sender.class, @@receivers.collect(&:class)].flatten.uniq
-    end
-
     def define_associations
-      sender_receiver_classes.each do |base|
+      @@sender.class.class_eval do
+        has_many :sent_notifications, class_name: 'SimpleNotifications::Record', as: :sender
+      end unless @@sender.class == NilClass
+
+      @@receivers.collect(&:class).flatten.uniq.each do |base|
         base.class_eval do
-            has_many :deliveries, class_name: 'SimpleNotifications::Delivery', as: :receiver
-            has_many :sent_notifications, class_name: 'SimpleNotifications::Record', as: :sender
-            has_many :notification_senders, through: :sent_notifications
-            has_many :notification_receivers, through: :received_notifications
-        end
+          has_many :deliveries, class_name: 'SimpleNotifications::Delivery', as: :receiver
+          has_many :received_notifications, through: :deliveries, source: :simple_notification
+        end unless base.class == NilClass
       end
     end
   end
 end
 
 # Rails.application.eager_load!
+# ProductClass.first.products.create(name: 'asdfsdfs')
 # Product.notified?
