@@ -1,9 +1,11 @@
 require 'simple_notifications/version'
-require 'simple_notifications/core'
+require 'simple_notifications/base'
+require_relative 'simple_notifications/app/models/simple_notification'
+require_relative 'simple_notifications/app/models/delivery'
 
 module SimpleNotifications
-  def self.included(base)
-    base.extend Core
+  def self.included(base_class)
+    base_class.extend Base
   end
 end
 
