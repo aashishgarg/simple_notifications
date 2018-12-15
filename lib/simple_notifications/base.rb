@@ -13,8 +13,11 @@ module SimpleNotifications
       @@entity_class = self
       @@sender = options[:sender]
       @@receivers = options[:receivers]
+
       SimpleNotifications::Record.before_notify = options[:before_notify] if !!options[:before_notify]
       SimpleNotifications::Record.after_notify = options[:after_notify] if !!options[:after_notify]
+      SimpleNotifications::Delivery.after_delivered = options[:after_delivered] if !!options[:after_delivered]
+      SimpleNotifications::Delivery.after_read = options[:after_read] if !!options[:after_read]
 
       open_sender_class
       open_receiver_class
