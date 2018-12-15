@@ -67,10 +67,12 @@ module SimpleNotifications
         after_create_commit :create_notification, if: proc { @notify.nil? || !!@notify }
         after_update_commit :update_notification, if: proc { @notify.nil? || !!@notify }
 
+        # Check if notifications has already been delivered.
         def notified?
           !notifications.blank?
         end
 
+        # Deliver notifications at any time
         def notify(options={})
           raise 'SimpleNotification::SenderReceiverError' unless options[:sender] && options[:receivers]
           @message = options[:message] if options[:message]
@@ -80,10 +82,16 @@ module SimpleNotifications
           notification.save
         end
 
+        # Mark notifications in read mode.
+        # If notificants are provided then only those respective notifications will be marked read.
+        # Else all will be marked as read.
         def mark_read(notificants = nil)
           (notificants ? unread_deliveries.where(receiver: notificants) : unread_deliveries).update_all(is_read: true)
         end
 
+        # Mark notifications in unread mode.
+        # If notificants are provided then only those respective notifications will be marked unread.
+        # Else all will be marked as unread.
         def mark_unread(notificants = nil)
           (notificants ? read_deliveries.where(receiver: notificants) : read_deliveries).update_all(is_read: false)
         end
