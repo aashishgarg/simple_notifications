@@ -51,6 +51,20 @@ notify sender: User.first, receivers: [:followers, User.all]
 
 Here :sender and :followers should be associations for the model which needs to be notified.
 
+### Notification Models
+
+```ruby
+SimpleNotifications::Record
+SimpleNotifications::Delivery
+```
+
+### Scopes
+
+```ruby
+SimpleNotifications::Record.read
+SimpleNotifications::Record.unread
+```
+
 ### Methods
 Suppose **Post** is the notified model and **author** is the sender association and **followers** is the receiver association.
 Then following methods are available
@@ -86,6 +100,13 @@ author.sent_notifications
 follower.received_notifications
 ```
 
+**Methods for [notification] object**
+```ruby
+SimpleNotifications::Record.last.sender
+SimpleNotifications::Record.last.entity
+SimpleNotifications::Record.last.#{receiver_class.name.downcase}_receivers
+```
+
 ### Skipping Notification
 
 ```ruby
@@ -96,20 +117,6 @@ Post.create(content: '123', notify: false)
 
 ```ruby
 Post.create(content: '123', message: 'My custom notification message')
-```
-
-### Notification Models
-
-```ruby
-SimpleNotifications::Record
-SimpleNotifications::Delivery
-```
-
-### Scopes
-
-```ruby
-SimpleNotifications::Record.read
-SimpleNotifications::Record.unread
 ```
 
 ## Contributing
