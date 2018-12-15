@@ -39,7 +39,10 @@ rails db:migrate
 Add following line to the model for which notifications functionality is required
 
 ```ruby
-notify sender: :author, receivers: :followers
+notify sender: :author, 
+       receivers: :followers, 
+       before_notify: proc {puts 'Before Notifications actions'},
+       after_notify: proc {puts 'Deliver Push notifications'}
 ``` 
 Or you can provide ActiveRecord::Base object or ActiveRecord::Relation objects as 
 

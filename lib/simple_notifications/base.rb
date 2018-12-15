@@ -7,12 +7,14 @@ module SimpleNotifications
       !!@@notified_flag
     end
 
-    # Add this method to any model and it starts the notification functionality on the Model.
-    # Expects two parameters :sender and :receiver.
+    #Example
+    #notify(sender: :author, receivers: :followers)
     def notify(options = {})
       @@entity_class = self
       @@sender = options[:sender]
       @@receivers = options[:receivers]
+      SimpleNotifications::Record.before_notify = options[:before_notify] if !!options[:before_notify]
+      SimpleNotifications::Record.after_notify = options[:after_notify] if !!options[:after_notify]
 
       open_sender_class
       open_receiver_class
@@ -79,7 +81,9 @@ module SimpleNotifications
           !notifications.blank?
         end
 
-        # Deliver notifications at any time
+        #Example
+        #post.notify(sender: :author, receivers: :followers, message: 'My Custom logic message')
+        #post.create(content: '', notify: false) -> It does not create the notification.
         def notify(options = {})
           raise 'SimpleNotification::SenderReceiverError' unless options[:sender] && options[:receivers]
           @message = options[:message] if options[:message]

@@ -2,6 +2,9 @@ module SimpleNotifications
   class Record < ActiveRecord::Base
     self.table_name = 'simple_notifications'
 
+    # Class Attribute Accessors
+    cattr_accessor :before_notify, :after_notify
+
     # Associations
     belongs_to :sender, polymorphic: true
     belongs_to :entity, polymorphic: true
@@ -28,11 +31,17 @@ module SimpleNotifications
     validates :message, presence: true, length: {minimum: 1, maximum: 199}
 
     # Callbacks
+    before_create :before_actions
     after_create_commit :after_actions
 
     private
 
+    def before_actions
+      SimpleNotifications::Record.before_notify.call if !!SimpleNotifications::Record.before_notify
+    end
+
     def after_actions
+      SimpleNotifications::Record.after_notify.call if !!SimpleNotifications::Record.after_notify
     end
   end
 end
