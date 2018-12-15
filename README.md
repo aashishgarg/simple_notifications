@@ -58,11 +58,16 @@ Then following methods are available
 
 Methods for the **post** object
 
+* post.notify(sender: :author, receivers: :followers, message: 'My own message')
 * post.notifications
 * post.notifiers
 * post.notificants
 * post.read_notificants
 * post.unread_notificants
+* post.mark_read
+* post.mark_read(receivers)
+* post.mark_unread
+* post.mark_unread(receivers)
 
 Methods for **author** object
 

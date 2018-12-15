@@ -71,6 +71,23 @@ module SimpleNotifications
           !notifications.blank?
         end
 
+        def notify(options={})
+          raise 'SimpleNotification::SenderReceiverError' unless options[:sender] && options[:receivers]
+          @message = options[:message] if options[:message]
+          notification = notifications.build(entity: self, sender: options[:sender],
+                                                         message: default_message(self, options[:sender], 'created'))
+          options[:receivers].each {|receiver| notification.deliveries.build(receiver: receiver)}
+          notification.save
+        end
+
+        def mark_read(notificants = nil)
+          (notificants ? unread_deliveries.where(receiver: notificants) : unread_deliveries).update_all(is_read: true)
+        end
+
+        def mark_unread(notificants = nil)
+          (notificants ? read_deliveries.where(receiver: notificants) : read_deliveries).update_all(is_read: false)
+        end
+
         private
 
         def default_message(entity, sender, action)
@@ -78,15 +95,11 @@ module SimpleNotifications
         end
 
         def create_notification
-          notification = SimpleNotifications::Record.new(entity: self, sender: @@sender, message: default_message(self, @@sender, 'created'))
-          @@receivers.each {|receiver| notification.deliveries.build(receiver: receiver)}
-          notification.save
+          notify({sender: @@sender, receivers: @@receivers, message: default_message(self, @@sender, 'created')})
         end
 
         def update_notification
-          notification = SimpleNotifications::Record.new(entity: self, sender: @@sender, message: default_message(self, @@sender, 'updated'))
-          @@receivers.each {|receiver| notification.deliveries.build(receiver: receiver)}
-          notification.save
+          notify({sender: @@sender, receivers: @@receivers, message: default_message(self, @@sender, 'updated')})
         end
       end
     end
