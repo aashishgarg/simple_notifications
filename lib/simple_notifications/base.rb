@@ -85,7 +85,8 @@ module SimpleNotifications
         end
 
         def notificants
-
+          #TODO : Need to eager load
+          SimpleNotifications::Record.where(entity: self).collect {|notification| notification.deliveries.collect(&:receiver)}.flatten
         end
 
         # Mark notifications in read mode.

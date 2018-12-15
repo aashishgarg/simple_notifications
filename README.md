@@ -79,6 +79,7 @@ Post.notified?
 post.notify(sender: :author, receivers: :followers, message: 'My own message')
 post.notifications
 post.notifiers
+post.notificants
 post.#{receiver_class}_notificants
 post.read_notificants
 post.unread_notificants
