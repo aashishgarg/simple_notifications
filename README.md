@@ -120,6 +120,12 @@ Post.create(content: '123', notify: false)
 Post.create(content: '123', message: 'My custom notification message')
 ```
 
+### Generators
+
+```ruby
+rails generate simple_notifications:copy_models
+```
+
 ## Contributing
 
 Bug reports and pull requests are welcome on GitHub at https://github.com/aashishgarg/simple_notifications. 
