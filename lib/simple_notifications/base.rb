@@ -39,11 +39,11 @@ module SimpleNotifications
     end
 
     def open_notified_class
-      self.class_eval do
+      class_eval do
         attr_accessor :message, :notify
         # Define association for the notified model
         has_many :notifications, class_name: 'SimpleNotifications::Record', as: :entity
-        has_many :notifiers, through: :notifications, source: :sender, source_type: @@sender.class.name
+        has_many :notifiers, through: :notifications, source: :sender, source_type: sender_class(@@sender).to_s
 
         SimpleNotifications::Record.class_eval do
           [@@entity_class.receivers_class(@@receivers)].flatten.each do |receiver_class|
@@ -125,8 +125,7 @@ module SimpleNotifications
 
     def sender_class(sender)
       if sender.kind_of? Symbol
-        #FIXME : Need to refactor this
-        self.last.send(sender).class
+        reflections[sender.to_s].klass
       elsif sender.kind_of? ActiveRecord::Base
         sender.class
       else
@@ -136,7 +135,7 @@ module SimpleNotifications
 
     def receivers_class(receivers)
       if receivers.kind_of? Symbol
-        self.new.send(receivers).new
+        reflections[receivers.to_s].klass
       else
         if receivers.kind_of? ActiveRecord::Base
           receivers.class
