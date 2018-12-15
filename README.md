@@ -81,8 +81,8 @@ post.notifications
 post.notifiers
 post.notificants
 post.#{receiver_class}_notificants
-post.read_notificants
-post.unread_notificants
+post.read_marked_notificants
+post.unread_marked_notificants
 post.mark_read
 post.mark_read(receivers)
 post.mark_unread

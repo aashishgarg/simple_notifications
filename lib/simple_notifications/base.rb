@@ -47,24 +47,24 @@ module SimpleNotifications
 
         SimpleNotifications::Record.class_eval do
           [@@entity_class.receivers_class(@@receivers)].flatten.each do |receiver_class|
-            has_many "#{receiver_class.class.name.downcase}_receivers".to_sym,
+            has_many "#{receiver_class.name.downcase}_receivers".to_sym,
                      through: :deliveries,
                      source: :receiver,
-                     source_type: receiver_class.class.name
+                     source_type: receiver_class.name
           end
         end
 
         [receivers_class(@@receivers)].flatten.each do |receiver_class|
-          has_many "#{receiver_class.class.name.downcase}_notificants".to_sym,
+          has_many "#{receiver_class.name.downcase}_notificants".to_sym,
                    through: :notifications,
-                   source: "#{receiver_class.class.name.downcase}_receivers".to_sym
+                   source: "#{receiver_class.name.downcase}_receivers".to_sym
         end
 
         # has_many :notificants, through: :notifications, source: :receivers
         has_many :read_deliveries, through: :notifications, source: :read_deliveries
         has_many :unread_deliveries, through: :notifications, source: :unread_deliveries
-        has_many :read_notificants, through: :read_deliveries, source: :receiver, source_type: 'User'
-        has_many :unread_notificants, through: :unread_deliveries, source: :receiver, source_type: 'User'
+        # has_many :read_notificants, through: :read_deliveries, source: :receiver, source_type: 'User'
+        # has_many :unread_notificants, through: :unread_deliveries, source: :receiver, source_type: 'User'
 
         after_create_commit :create_notification, if: proc {@notify.nil? || !!@notify}
         after_update_commit :update_notification, if: proc {@notify.nil? || !!@notify}
@@ -87,6 +87,16 @@ module SimpleNotifications
         def notificants
           #TODO : Need to eager load
           SimpleNotifications::Record.where(entity: self).collect {|notification| notification.deliveries.collect(&:receiver)}.flatten
+        end
+
+        def read_marked_notificants
+          #TODO : Need to eager load
+          SimpleNotifications::Record.where(entity: self).collect {|notification| notification.deliveries.where(is_read: true).collect(&:receiver)}.flatten
+        end
+
+        def unread_marked_notificants
+          #TODO : Need to eager load
+          SimpleNotifications::Record.where(entity: self).collect {|notification| notification.deliveries.where(is_read: false).collect(&:receiver)}.flatten
         end
 
         # Mark notifications in read mode.
