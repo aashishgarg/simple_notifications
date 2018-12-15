@@ -7,12 +7,14 @@ module SimpleNotifications
       !!@@notified_flag
     end
 
-    # Add this method to any model and it starts the notification functionality on the Model.
-    # Expects two parameters :sender and :receiver.
+    #Example
+    #notify(sender: :author, receivers: :followers)
     def notify(options = {})
       @@entity_class = self
       @@sender = options[:sender]
       @@receivers = options[:receivers]
+      SimpleNotifications::Record.before_notify = options[:before_notify] if !!options[:before_notify]
+      SimpleNotifications::Record.after_notify = options[:after_notify] if !!options[:after_notify]
 
       open_sender_class
       open_receiver_class
@@ -21,6 +23,7 @@ module SimpleNotifications
       @@notified_flag = true
     end
 
+    # Opening the class which is defined as sender.
     def open_sender_class
       # Define association for sender model
       sender_class(@@sender).class_eval do
@@ -28,6 +31,7 @@ module SimpleNotifications
       end
     end
 
+    # Opening the classes which are defined as receivers.
     def open_receiver_class
       # Define association for receiver model
       [receivers_class(@@receivers)].flatten.each do |base|
@@ -38,6 +42,7 @@ module SimpleNotifications
       end
     end
 
+    # Opening the class on which the notify functionality is applied.
     def open_notified_class
       class_eval do
         attr_accessor :message, :notify
@@ -45,6 +50,7 @@ module SimpleNotifications
         has_many :notifications, class_name: 'SimpleNotifications::Record', as: :entity
         has_many :notifiers, through: :notifications, source: :sender, source_type: sender_class(@@sender).to_s
 
+        # Opening the Notification class.
         SimpleNotifications::Record.class_eval do
           [@@entity_class.receivers_class(@@receivers)].flatten.each do |receiver_class|
             has_many "#{receiver_class.name.downcase}_receivers".to_sym,
@@ -60,12 +66,13 @@ module SimpleNotifications
                    source: "#{receiver_class.name.downcase}_receivers".to_sym
         end
 
-        # has_many :notificants, through: :notifications, source: :receivers
         has_many :read_deliveries, through: :notifications, source: :read_deliveries
         has_many :unread_deliveries, through: :notifications, source: :unread_deliveries
+        # has_many :notificants, through: :notifications, source: :receivers
         # has_many :read_notificants, through: :read_deliveries, source: :receiver, source_type: 'User'
         # has_many :unread_notificants, through: :unread_deliveries, source: :receiver, source_type: 'User'
 
+        # Callbacks
         after_create_commit :create_notification, if: proc {@notify.nil? || !!@notify}
         after_update_commit :update_notification, if: proc {@notify.nil? || !!@notify}
 
@@ -74,7 +81,9 @@ module SimpleNotifications
           !notifications.blank?
         end
 
-        # Deliver notifications at any time
+        #Example
+        #post.notify(sender: :author, receivers: :followers, message: 'My Custom logic message')
+        #post.create(content: '', notify: false) -> It does not create the notification.
         def notify(options = {})
           raise 'SimpleNotification::SenderReceiverError' unless options[:sender] && options[:receivers]
           @message = options[:message] if options[:message]
@@ -133,6 +142,7 @@ module SimpleNotifications
       end
     end
 
+    # Provides the class of Sender
     def sender_class(sender)
       if sender.kind_of? Symbol
         reflections[sender.to_s].klass
@@ -143,6 +153,7 @@ module SimpleNotifications
       end
     end
 
+    # Provides the classes of Receivers
     def receivers_class(receivers)
       if receivers.kind_of? Symbol
         reflections[receivers.to_s].klass
