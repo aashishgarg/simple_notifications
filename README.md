@@ -42,7 +42,9 @@ Add following line to the model for which notifications functionality is require
 notify sender: :author, 
        receivers: :followers, 
        before_notify: proc {puts 'Before Notifications actions'},
-       after_notify: proc {puts 'Deliver Push notifications'}
+       after_notify: proc {puts 'Deliver Push notifications'},
+       after_delivered: proc {puts 'Notification delivered'},
+       after_read: proc { puts 'Notification marked as read'}
 ``` 
 Or you can provide ActiveRecord::Base object or ActiveRecord::Relation objects as 
 
