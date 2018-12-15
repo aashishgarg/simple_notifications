@@ -57,7 +57,6 @@ Then following methods are available
 
 ```ruby
 Post.notified?
-Post.notification_validated?
 ```
 
 **Methods for the [post] object**
