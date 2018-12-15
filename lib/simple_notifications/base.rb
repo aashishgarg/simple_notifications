@@ -28,11 +28,21 @@ module SimpleNotifications
       @@receivers = options[:receivers]
       raise 'SimpleNotifications::SenderReceiversError' unless notification_validated?
 
+      add_sender_class_features
+      add_receiver_class_features
+      add_notified_class_features
+
+      @@notified_flag = true
+    end
+
+    def add_sender_class_features
       # Define association for sender model
       @@sender.class.class_eval do
         has_many :sent_notifications, class_name: 'SimpleNotifications::Record', as: :sender
       end unless @@sender.class == NilClass
+    end
 
+    def add_receiver_class_features
       # Define association for receiver model
       @@receivers.collect(&:class).flatten.uniq.each do |base|
         base.class_eval do
@@ -40,30 +50,66 @@ module SimpleNotifications
           has_many :received_notifications, through: :deliveries, source: :simple_notification
         end unless base.class == NilClass
       end
+    end
 
+    def add_notified_class_features
       self.class_eval do
+        attr_accessor :message, :notify
         # Define association for the notified model
         has_many :notifications, class_name: 'SimpleNotifications::Record', as: :entity
         has_many :notifiers, through: :notifications, source: :sender, source_type: @@sender.class.name
         has_many :notificants, through: :notifications, source: :receivers
+        has_many :read_deliveries, through: :notifications, source: :read_deliveries
+        has_many :unread_deliveries, through: :notifications, source: :unread_deliveries
+        has_many :read_notificants, through: :read_deliveries, source: :receiver, source_type: 'User'
+        has_many :unread_notificants, through: :unread_deliveries, source: :receiver, source_type: 'User'
 
-        # Callbacks for notified model
-        after_create_commit :create_notification
+        after_create_commit :create_notification, if: proc { @notify.nil? || !!@notify }
+        after_update_commit :update_notification, if: proc { @notify.nil? || !!@notify }
+
+        # Check if notifications has already been delivered.
+        def notified?
+          !notifications.blank?
+        end
+
+        # Deliver notifications at any time
+        def notify(options={})
+          raise 'SimpleNotification::SenderReceiverError' unless options[:sender] && options[:receivers]
+          @message = options[:message] if options[:message]
+          notification = notifications.build(entity: self, sender: options[:sender],
+                                                         message: default_message(self, options[:sender], 'created'))
+          options[:receivers].each {|receiver| notification.deliveries.build(receiver: receiver)}
+          notification.save
+        end
+
+        # Mark notifications in read mode.
+        # If notificants are provided then only those respective notifications will be marked read.
+        # Else all will be marked as read.
+        def mark_read(notificants = nil)
+          (notificants ? unread_deliveries.where(receiver: notificants) : unread_deliveries).update_all(is_read: true)
+        end
+
+        # Mark notifications in unread mode.
+        # If notificants are provided then only those respective notifications will be marked unread.
+        # Else all will be marked as unread.
+        def mark_unread(notificants = nil)
+          (notificants ? read_deliveries.where(receiver: notificants) : read_deliveries).update_all(is_read: false)
+        end
 
         private
 
-        def message(entity, sender)
-          "#{entity.class.name} #{entity.name} created by #{sender.id}"
+        def default_message(entity, sender, action)
+          @message || "#{entity.class.name} #{entity.name} #{action}."
         end
 
         def create_notification
-          notification = SimpleNotifications::Record.new(entity: self, sender: @@sender, message: message(self, @@sender))
-          @@receivers.each {|receiver| notification.deliveries.build(receiver: receiver)}
-          notification.save
+          notify({sender: @@sender, receivers: @@receivers, message: default_message(self, @@sender, 'created')})
+        end
+
+        def update_notification
+          notify({sender: @@sender, receivers: @@receivers, message: default_message(self, @@sender, 'updated')})
         end
       end
-
-      @@notified_flag = true
     end
   end
 end
