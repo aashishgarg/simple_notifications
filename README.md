@@ -44,7 +44,9 @@ notify sender: :author, receivers: :followers
 Or you can provide ActiveRecord::Base object or ActiveRecord::Relation objects as 
 
 ```ruby
-notify sender: User.first, receivers: User.all
+notify sender: :author, receivers: User.all
+
+notify sender: User.first, receivers: [:followers, User.all]
 ```
 
 Here :sender and :followers should be associations for the model which needs to be notified.
@@ -53,27 +55,63 @@ Here :sender and :followers should be associations for the model which needs to 
 Suppose **Post** is the notified model and **author** is the sender association and **followers** is the receiver association.
 Then following methods are available
 
-* Post.notified?
-* Post.notification_validated?
+```ruby
+Post.notified?
+Post.notification_validated?
+```
 
-Methods for the **post** object
+**Methods for the [post] object**
 
-* post.notifications
-* post.notifiers
-* post.notificants
+```ruby
+post.notify(sender: :author, receivers: :followers, message: 'My own message')
+post.notifications
+post.notifiers
+post.#{receiver_class}_notificants
+post.read_notificants
+post.unread_notificants
+post.mark_read
+post.mark_read(receivers)
+post.mark_unread
+post.mark_unread(receivers)
+```
 
-Methods for **author** object
+**Methods for [author] object**
 
-* author.sent_notifications
+```ruby
+author.sent_notifications
+```
 
-Methods for **follower** object
+**Methods for [follower] object**
 
-* follower.received_notifications
+```ruby
+follower.received_notifications
+```
 
-Notification Model
+### Skipping Notification
 
-* SimpleNotifications::Record
-* SimpleNotifications::Delivery
+```ruby
+Post.create(content: '123', notify: false)
+```
+
+### Custom Notification message
+
+```ruby
+Post.create(content: '123', message: 'My custom notification message')
+```
+
+### Notification Models
+
+```ruby
+SimpleNotifications::Record
+SimpleNotifications::Delivery
+```
+
+### Scopes
+
+```ruby
+SimpleNotifications::Record.read
+SimpleNotifications::Record.unread
+```
 
 ## Contributing
 
