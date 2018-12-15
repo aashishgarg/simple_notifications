@@ -44,7 +44,9 @@ notify sender: :author, receivers: :followers
 Or you can provide ActiveRecord::Base object or ActiveRecord::Relation objects as 
 
 ```ruby
-notify sender: User.first, receivers: User.all
+notify sender: :author, receivers: User.all
+
+notify sender: User.first, receivers: [:followers, User.all]
 ```
 
 Here :sender and :followers should be associations for the model which needs to be notified.
@@ -61,7 +63,7 @@ Methods for the **post** object
 * post.notify(sender: :author, receivers: :followers, message: 'My own message')
 * post.notifications
 * post.notifiers
-* post.notificants
+* post.#{receiver_class}_notificants
 * post.read_notificants
 * post.unread_notificants
 * post.mark_read
