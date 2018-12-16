@@ -9,6 +9,9 @@ module SimpleNotifications
 
     #Example
     #notify(sender: :author, receivers: :followers)
+    #notify sender: :product_class,
+    #       receivers: :variants,
+    #       action: [{follow: [:before, :after, :around]}, :update, :create, :destroy]
     def notify(options = {})
       @@entity_class = self
       @@sender = options[:sender]
