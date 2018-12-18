@@ -28,7 +28,7 @@ rails generate simple_notifications:install
 This will generate two files in your rails project
 
 * simple_notifications.rb - An initializer file.
-* Migration file - Required for recording notifications.
+* Migration files - Required for recording notifications.
 
 Then run
 
@@ -39,22 +39,21 @@ rails db:migrate
 Add following line to the model for which notifications functionality is required
 
 ```ruby
-notify sender: :product_class,
-         receivers: :variants,
-         actions: [:follow, :unfollow, :update, :create],
-         notify_message: :dd_message,
-         before_notify: :before_notify_method,
-         after_notify: :after_notify_method,
-         before_delivered: :before_delivered_method,
-         after_delivered: :after_delivered_method,
-         before_read: :before_read_method,
-         after_read: :after_read_method
+notify sender: :author,
+       receivers: :followers,
+       actions: [:follow, :unfollow, :update],
+       notify_message: :message_method,
+       before_notify: :before_notify_method,
+       after_notify: :after_notify_method,
+       before_delivered: :before_delivered_method,
+       after_delivered: :after_delivered_method,
+       before_read: :before_read_method,
+       after_read: :after_read_method
 ``` 
 Or you can provide ActiveRecord::Base object or ActiveRecord::Relation objects as 
 
 ```ruby
 notify sender: :author, receivers: User.all
-
 notify sender: User.first, receivers: [:followers, User.all]
 ```
 
