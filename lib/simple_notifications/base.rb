@@ -1,22 +1,12 @@
 module SimpleNotifications
   module Base
-    module NotificationActions
-      ;
-    end
-
     mattr_accessor :notified_flag, :entity_class, :sender, :receivers, :actions, :notify_message
-
-    #Getter to check if model is enabled with notifications
-    def notified?
-      !!@@notified_flag
-    end
 
     #Example
     #notify(sender: :author, receivers: :followers)
     #notify sender: :product_class,
     #       receivers: :variants,
     #       action: [:follow, :update, :create, :destroy]
-
     def notify(options = {})
       @@entity_class = self
       @@sender = options[:sender]
@@ -28,12 +18,15 @@ module SimpleNotifications
       SimpleNotifications::Record.after_notify = options[:after_notify] if !!options[:after_notify]
       SimpleNotifications::Delivery.after_delivered = options[:after_delivered] if !!options[:after_delivered]
       SimpleNotifications::Delivery.after_read = options[:after_read] if !!options[:after_read]
-
       open_sender_class
       open_receiver_class
       open_notified_class
-
       @@notified_flag = true
+    end
+
+    #Getter to check if model is enabled with notifications
+    def notified?
+      !!@@notified_flag
     end
 
     # Opening the class which is defined as sender.
@@ -64,8 +57,6 @@ module SimpleNotifications
         # Define association for the notified model
         has_many :notifications, class_name: 'SimpleNotifications::Record', as: :entity
         has_many :notifiers, through: :notifications, source: :sender, source_type: sender_class(@@sender).to_s
-
-        # Opening the Notification class.
         SimpleNotifications::Record.class_eval do
           [@@entity_class.receivers_class(@@receivers)].flatten.each do |receiver_class|
             has_many "#{receiver_class.name.downcase}_receivers".to_sym,
@@ -74,13 +65,11 @@ module SimpleNotifications
                      source_type: receiver_class.name
           end
         end
-
         [receivers_class(@@receivers)].flatten.each do |receiver_class|
           has_many "#{receiver_class.name.downcase}_notificants".to_sym,
                    through: :notifications,
                    source: "#{receiver_class.name.downcase}_receivers".to_sym
         end
-
         has_many :read_deliveries, through: :notifications, source: :read_deliveries
         has_many :unread_deliveries, through: :notifications, source: :unread_deliveries
         # has_many :notificants, through: :notifications, source: :receivers
@@ -114,11 +103,6 @@ module SimpleNotifications
           send("after_#{action}", "after_#{action}".to_sym)
         end
 
-        # Check if notifications has already been delivered.
-        def notified?
-          !notifications.blank?
-        end
-
         #Example
         #post.notify(sender: :author, receivers: :followers, message: 'My Custom logic message')
         #post.create(content: '', notify: false) -> It does not create the notification.
@@ -128,6 +112,11 @@ module SimpleNotifications
           notification = notifications.build(entity: self, sender: get_obj(options[:sender]), message: default_message(self, get_obj(options[:sender]), 'created'))
           get_obj(options[:receivers]).each {|receiver| notification.deliveries.build(receiver: receiver)}
           notification.save
+        end
+
+        # Check if notifications has already been delivered.
+        def notified?
+          !notifications.blank?
         end
 
         def notificants
@@ -159,14 +148,14 @@ module SimpleNotifications
           (notificants ? read_deliveries.where(receiver: notificants) : read_deliveries).update_all(is_read: false)
         end
 
+        def default_message(entity, sender, action)
+          @message || (method(@@notify_message).call if !!@@notify_message) || "#{get_obj(sender).class.name} #{action} #{entity.class.name} #{entity.name}."
+        end
+
         private
 
         def get_obj(sender_or_receivers)
           sender_or_receivers.kind_of?(Symbol) ? send(sender_or_receivers) : sender_or_receivers
-        end
-
-        def default_message(entity, sender, action)
-          @message || "#{get_obj(sender).class.name} #{action} #{entity.class.name} #{entity.name}."
         end
 
         def create_notification
