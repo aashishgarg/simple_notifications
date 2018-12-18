@@ -19,7 +19,8 @@ class CreateSimpleNotifications < ActiveRecord::Migration[5.2]
 
     add_index(:simple_notifications, [:sender_id, :sender_type])
     add_index(:simple_notifications, [:entity_id, :entity_type])
-    add_index(:deliveries, [:sender_id, :sender_type])
+    add_index(:deliveries, [:receiver_id, :receiver_type])
     add_index(:deliveries, :is_delivered)
+    add_index(:deliveries, :is_read)
   end
 end
