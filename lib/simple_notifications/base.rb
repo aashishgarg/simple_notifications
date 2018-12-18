@@ -1,6 +1,6 @@
 module SimpleNotifications
   module Base
-    mattr_accessor :notified_flag, :entity_class, :sender, :receivers, :actions, :notify_message
+    mattr_accessor :options, :notified_flag
 
     #Example
     #notify(sender: :author, receivers: :followers)
@@ -8,16 +8,11 @@ module SimpleNotifications
     #       receivers: :variants,
     #       action: [:follow, :update, :create, :destroy]
     def notify(options = {})
-      @@entity_class = self
-      @@sender = options[:sender]
-      @@receivers = options[:receivers]
-      @@actions = options[:actions]
-      @@notify_message = options[:notify_message]
-
-      SimpleNotifications::Record.before_notify = options[:before_notify] if !!options[:before_notify]
-      SimpleNotifications::Record.after_notify = options[:after_notify] if !!options[:after_notify]
-      SimpleNotifications::Delivery.after_delivered = options[:after_delivered] if !!options[:after_delivered]
-      SimpleNotifications::Delivery.after_read = options[:after_read] if !!options[:after_read]
+      @@options = options
+      @@options[:entity_class] = self
+      @@options[:callbacks] = []
+      [:create, :update, :destroy].each {|_method| @@options[:callbacks] << @@options[:actions].delete(_method)}
+      @@options[:callbacks].compact!
       open_sender_class
       open_receiver_class
       open_notified_class
@@ -32,7 +27,7 @@ module SimpleNotifications
     # Opening the class which is defined as sender.
     def open_sender_class
       # Define association for sender model
-      sender_class(@@sender).class_eval do
+      sender_class(@@options[:sender]).class_eval do
         has_many :sent_notifications, class_name: 'SimpleNotifications::Record', as: :sender
       end
     end
@@ -40,7 +35,7 @@ module SimpleNotifications
     # Opening the classes which are defined as receivers.
     def open_receiver_class
       # Define association for receiver model
-      [receivers_class(@@receivers)].flatten.each do |base|
+      [receivers_class(@@options[:receivers])].flatten.each do |base|
         base.class_eval do
           has_many :deliveries, class_name: 'SimpleNotifications::Delivery', as: :receiver
           has_many :received_notifications, through: :deliveries, source: :simple_notification
@@ -56,16 +51,16 @@ module SimpleNotifications
 
         # Define association for the notified model
         has_many :notifications, class_name: 'SimpleNotifications::Record', as: :entity
-        has_many :notifiers, through: :notifications, source: :sender, source_type: sender_class(@@sender).to_s
+        has_many :notifiers, through: :notifications, source: :sender, source_type: sender_class(@@options[:sender]).to_s
         SimpleNotifications::Record.class_eval do
-          [@@entity_class.receivers_class(@@receivers)].flatten.each do |receiver_class|
+          [@@options[:entity_class].receivers_class(@@options[:receivers])].flatten.each do |receiver_class|
             has_many "#{receiver_class.name.downcase}_receivers".to_sym,
                      through: :deliveries,
                      source: :receiver,
                      source_type: receiver_class.name
           end
         end
-        [receivers_class(@@receivers)].flatten.each do |receiver_class|
+        [receivers_class(@@options[:receivers])].flatten.each do |receiver_class|
           has_many "#{receiver_class.name.downcase}_notificants".to_sym,
                    through: :notifications,
                    source: "#{receiver_class.name.downcase}_receivers".to_sym
@@ -77,27 +72,26 @@ module SimpleNotifications
         # has_many :unread_notificants, through: :unread_deliveries, source: :receiver, source_type: 'User'
 
         # Callbacks
-        after_create_commit :create_notification, if: proc {@notify.nil? || !!@notify}
-        after_update_commit :update_notification, if: proc {@notify.nil? || !!@notify}
+        @@options[:callbacks].each {|_method| send("after_#{_method}_commit", "#{_method}_notification".to_sym)}
 
         NotificationActions.module_eval do
-          @@actions.each do |action|
+          @@options[:actions].each do |action|
             define_method(action) do
               run_callbacks action do
                 super()
               end
             end
 
-            define_method("before_#{action}") do
+            define_method("before_#{action}".to_sym) do
             end
 
-            define_method("after_#{action}") do
-              self.notify(sender: @@sender, receivers: @@receivers, message: default_message(self, @@sender, action.to_s))
+            define_method("after_#{action}".to_sym) do
+              self.notify(sender: @@options[:sender], receivers: @@options[:receivers], message: default_message(self, @@options[:sender], action.to_s))
             end
           end
         end
 
-        @@actions.each do |action|
+        @@options[:actions].each do |action|
           define_model_callbacks action
           send("before_#{action}", "before_#{action}".to_sym)
           send("after_#{action}", "after_#{action}".to_sym)
@@ -107,7 +101,7 @@ module SimpleNotifications
         #post.notify(sender: :author, receivers: :followers, message: 'My Custom logic message')
         #post.create(content: '', notify: false) -> It does not create the notification.
         def notify(options = {})
-          raise 'SimpleNotification::SenderReceiverError' unless options[:sender] && options[:receivers]
+          raise 'SimpleNotification::SenderReceiverError' unless @@options[:sender] && @@options[:receivers]
           @message = options[:message] if options[:message]
           notification = notifications.build(entity: self, sender: get_obj(options[:sender]), message: default_message(self, get_obj(options[:sender]), 'created'))
           get_obj(options[:receivers]).each {|receiver| notification.deliveries.build(receiver: receiver)}
@@ -149,7 +143,7 @@ module SimpleNotifications
         end
 
         def default_message(entity, sender, action)
-          @message || (method(@@notify_message).call if !!@@notify_message) || "#{get_obj(sender).class.name} #{action} #{entity.class.name} #{entity.name}."
+          @message || (method(@@options[:notify_message]).call if !!@@options[:notify_message]) || "#{get_obj(sender).class.name} #{action} #{entity.class.name} #{entity.name}."
         end
 
         private
@@ -159,11 +153,15 @@ module SimpleNotifications
         end
 
         def create_notification
-          notify({sender: get_obj(@@sender), receivers: get_obj(@@receivers), message: default_message(self, get_obj(@@sender), 'created')})
+          notify({sender: get_obj(@@options[:sender]), receivers: get_obj(@@options[:receivers]), message: default_message(self, get_obj(@@options[:sender]), 'created')})
         end
 
         def update_notification
-          notify({sender: get_obj(@@sender), receivers: get_obj(@@receivers), message: default_message(self, get_obj(@@sender), 'updated')})
+          notify({sender: get_obj(@@options[:sender]), receivers: get_obj(@@options[:receivers]), message: default_message(self, get_obj(@@options[:sender]), 'updated')})
+        end
+
+        def destroy_notification
+          notify({sender: get_obj(@@options[:sender]), receivers: get_obj(@@options[:receivers]), message: default_message(self, get_obj(@@options[:sender]), 'deleted')})
         end
       end
     end

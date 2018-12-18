@@ -36,12 +36,17 @@ module SimpleNotifications
 
     private
 
-    def before_actions
-      SimpleNotifications::Record.before_notify.call if !!SimpleNotifications::Record.before_notify
-    end
-
-    def after_actions
-      SimpleNotifications::Record.after_notify.call if !!SimpleNotifications::Record.after_notify
+    %w(before after).each do |call_type|
+      define_method("#{call_type}_actions".to_sym) do
+        _method = SimpleNotifications::Base.send(:options)["#{call_type}_notify".to_sym]
+        if _method.present?
+          if _method.class == Symbol
+            entity.method(_method).call if entity.class.instance_methods(false).include?(_method)
+          elsif _method.class == Proc
+            _method.call
+          end
+        end
+      end
     end
   end
 end

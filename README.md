@@ -39,12 +39,16 @@ rails db:migrate
 Add following line to the model for which notifications functionality is required
 
 ```ruby
-notify sender: :author, 
-       receivers: :followers, 
-       before_notify: proc {puts 'Before Notifications actions'},
-       after_notify: proc {puts 'Deliver Push notifications'},
-       after_delivered: proc {puts 'Notification delivered'},
-       after_read: proc { puts 'Notification marked as read'}
+notify sender: :product_class,
+         receivers: :variants,
+         actions: [:follow, :unfollow, :update, :create],
+         notify_message: :dd_message,
+         before_notify: :before_notify_method,
+         after_notify: :after_notify_method,
+         before_delivered: :before_delivered_method,
+         after_delivered: :after_delivered_method,
+         before_read: :before_read_method,
+         after_read: :after_read_method
 ``` 
 Or you can provide ActiveRecord::Base object or ActiveRecord::Relation objects as 
 
