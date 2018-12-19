@@ -24,8 +24,11 @@ module SimpleNotifications
              dependent: :destroy
 
     # Scopes
-    scope :read, -> {deliveries.where(is_read: true)}
-    scope :unread, -> {deliveries.where.not(is_read: true)}
+    scope :read, -> {joins(:deliveries).where('deliveries.is_read is (?)', true)}
+    scope :unread, -> {joins(:deliveries).where('deliveries.is_read is (?)', false)}
+    scope :delivered, -> {joins(:deliveries).where('deliveries.is_delivered is (?)', true)}
+    scope :undelivered, -> {joins(:deliveries).where('deliveries.is_delivered is (?)', false)}
+
 
     # Validations
     validates :message, presence: true, length: {minimum: 1, maximum: 199}
