@@ -104,6 +104,8 @@ module SimpleNotifications
         #post.notify(sender: :author, receivers: :followers, message: 'My Custom logic message')
         #post.create(content: '', notify: false) -> It does not create the notification.
         def notify(options = {})
+          options[:sender] ||= @@sender
+          options[:receivers] ||= @@receivers
           if notify_flag.nil? || (!notify_flag.nil? && !!notify_flag)
             raise 'SimpleNotification::SenderReceiverError' unless @@options[:sender] && @@options[:receivers]
             @message = options[:message] if options[:message]
