@@ -17,6 +17,10 @@ module SimpleNotifications
     after_update_commit :after_read, if: proc {!!SimpleNotifications::Base.options[:after_read] && previous_changes['is_read'] == [false, true]}
     after_update_commit :after_delivered, if: proc {!!SimpleNotifications::Base.options[:after_delivered] && previous_changes['is_delivered'] == [false, true]}
 
+    # Scopes
+    scope :read, -> {where(is_read: true)}
+    scope :unread, -> {where.not(is_read: true)}
+
     def entity
       simple_notification.entity
     end
