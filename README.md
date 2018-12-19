@@ -84,6 +84,7 @@ Post.notified?
 **Methods for the [post] object**
 
 ```ruby
+post.notify
 post.notify(sender: :author, receivers: :followers, message: 'My own message')
 post.notifications
 post.notifiers
