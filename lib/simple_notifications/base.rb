@@ -72,7 +72,6 @@ module SimpleNotifications
         # has_many :unread_notificants, through: :unread_deliveries, source: :receiver, source_type: 'User'
 
 
-
         # Callbacks
         after_create_commit :create_notification, if: proc {@@options[:callbacks].include?(:create)}
         after_update_commit :update_notification, if: proc {@@options[:callbacks].include?(:update)}
@@ -105,13 +104,11 @@ module SimpleNotifications
         #post.notify(sender: :author, receivers: :followers, message: 'My Custom logic message')
         #post.create(content: '', notify: false) -> It does not create the notification.
         def notify(options = {})
-          if notify.present? && !!notify
-            raise 'SimpleNotification::SenderReceiverError' unless @@options[:sender] && @@options[:receivers]
-            @message = options[:message] if options[:message]
-            notification = notifications.build(entity: self, sender: get_obj(options[:sender]), message: default_message(self, get_obj(options[:sender]), 'created'))
-            get_obj(options[:receivers]).each {|receiver| notification.deliveries.build(receiver: receiver)}
-            notification.save
-          end
+          raise 'SimpleNotification::SenderReceiverError' unless @@options[:sender] && @@options[:receivers]
+          @message = options[:message] if options[:message]
+          notification = notifications.build(entity: self, sender: get_obj(options[:sender]), message: default_message(self, get_obj(options[:sender]), 'created'))
+          get_obj(options[:receivers]).each {|receiver| notification.deliveries.build(receiver: receiver)}
+          notification.save
         end
 
         def flush_notifications
