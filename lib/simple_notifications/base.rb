@@ -47,7 +47,7 @@ module SimpleNotifications
     def open_notified_class
       class_eval do
         prepend NotificationActions
-        attr_accessor :message, :notify
+        attr_accessor :message, :notify_flag
 
         # Define association for the notified model
         has_many :notifications, class_name: 'SimpleNotifications::Record', as: :entity
@@ -104,11 +104,13 @@ module SimpleNotifications
         #post.notify(sender: :author, receivers: :followers, message: 'My Custom logic message')
         #post.create(content: '', notify: false) -> It does not create the notification.
         def notify(options = {})
-          raise 'SimpleNotification::SenderReceiverError' unless @@options[:sender] && @@options[:receivers]
-          @message = options[:message] if options[:message]
-          notification = notifications.build(entity: self, sender: get_obj(options[:sender]), message: default_message(self, get_obj(options[:sender]), 'created'))
-          get_obj(options[:receivers]).each {|receiver| notification.deliveries.build(receiver: receiver)}
-          notification.save
+          if notify_flag.present? ? (notify_flag == true) : true
+            raise 'SimpleNotification::SenderReceiverError' unless @@options[:sender] && @@options[:receivers]
+            @message = options[:message] if options[:message]
+            notification = notifications.build(entity: self, sender: get_obj(options[:sender]), message: default_message(self, get_obj(options[:sender]), 'created'))
+            get_obj(options[:receivers]).each {|receiver| notification.deliveries.build(receiver: receiver)}
+            notification.save
+          end
         end
 
         def flush_notifications
