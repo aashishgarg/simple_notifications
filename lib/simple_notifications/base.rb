@@ -1,5 +1,5 @@
 module SimpleNotifications
-  module Base
+  module Basenotified_flag
     mattr_accessor :options, :notified_flag
 
     #Example
@@ -47,7 +47,7 @@ module SimpleNotifications
     def open_notified_class
       class_eval do
         prepend NotificationActions
-        attr_accessor :message, :notify
+        attr_accessor :message, :notify_flag
 
         # Define association for the notified model
         has_many :notifications, class_name: 'SimpleNotifications::Record', as: :entity
@@ -71,8 +71,11 @@ module SimpleNotifications
         # has_many :read_notificants, through: :read_deliveries, source: :receiver, source_type: 'User'
         # has_many :unread_notificants, through: :unread_deliveries, source: :receiver, source_type: 'User'
 
+
         # Callbacks
-        @@options[:callbacks].each {|_method| send("after_#{_method}_commit", "#{_method}_notification".to_sym)}
+        after_create_commit :create_notification, if: proc {@@options[:callbacks].include?(:create)}
+        after_update_commit :update_notification, if: proc {@@options[:callbacks].include?(:update)}
+        after_destroy_commit :destroy_notification, if: proc {@@options[:callbacks].include?(:destroy)}
 
         NotificationActions.module_eval do
           @@options[:actions].each do |action|
@@ -159,15 +162,33 @@ module SimpleNotifications
         end
 
         def create_notification
-          notify({sender: get_obj(@@options[:sender]), receivers: get_obj(@@options[:receivers]), message: default_message(self, get_obj(@@options[:sender]), 'created')})
+          if notify_flag.present?
+            if notify_flag == true
+              notify({sender: get_obj(@@options[:sender]), receivers: get_obj(@@options[:receivers]), message: default_message(self, get_obj(@@options[:sender]), 'created')})
+            end
+          else
+            notify({sender: get_obj(@@options[:sender]), receivers: get_obj(@@options[:receivers]), message: default_message(self, get_obj(@@options[:sender]), 'created')})
+          end
         end
 
         def update_notification
-          notify({sender: get_obj(@@options[:sender]), receivers: get_obj(@@options[:receivers]), message: default_message(self, get_obj(@@options[:sender]), 'updated')})
+          if notify_flag.present?
+            if notify_flag == true
+              notify({sender: get_obj(@@options[:sender]), receivers: get_obj(@@options[:receivers]), message: default_message(self, get_obj(@@options[:sender]), 'updated')})
+            end
+          else
+            notify({sender: get_obj(@@options[:sender]), receivers: get_obj(@@options[:receivers]), message: default_message(self, get_obj(@@options[:sender]), 'updated')})
+          end
         end
 
         def destroy_notification
-          notify({sender: get_obj(@@options[:sender]), receivers: get_obj(@@options[:receivers]), message: default_message(self, get_obj(@@options[:sender]), 'deleted')})
+          if notify_flag.present?
+            if notify_flag == true
+              notify({sender: get_obj(@@options[:sender]), receivers: get_obj(@@options[:receivers]), message: default_message(self, get_obj(@@options[:sender]), 'deleted')})
+            end
+          else
+            notify({sender: get_obj(@@options[:sender]), receivers: get_obj(@@options[:receivers]), message: default_message(self, get_obj(@@options[:sender]), 'deleted')})
+          end
         end
       end
     end
