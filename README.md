@@ -119,7 +119,8 @@ SimpleNotifications::Record.last.#{receiver_class.name.downcase}_receivers
 ### Skipping Notification
 
 ```ruby
-Post.create(content: '123', notify: false)
+Post.create(content: '123', notify_flag: false)
+Post.create(content: '123', notify_flag: nil)
 ```
 
 ### Custom Notification message
