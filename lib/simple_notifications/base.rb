@@ -67,10 +67,6 @@ module SimpleNotifications
         end
         has_many :read_deliveries, through: :notifications, source: :read_deliveries
         has_many :unread_deliveries, through: :notifications, source: :unread_deliveries
-        # has_many :notificants, through: :notifications, source: :receivers
-        # has_many :read_notificants, through: :read_deliveries, source: :receiver, source_type: 'User'
-        # has_many :unread_notificants, through: :unread_deliveries, source: :receiver, source_type: 'User'
-
 
         # Callbacks
         after_create_commit :create_notification, if: proc {@@options[:callbacks].include?(:create)}
@@ -125,18 +121,22 @@ module SimpleNotifications
         end
 
         def notificants
-          #TODO : Need to eager load
-          SimpleNotifications::Record.where(entity: self).collect {|notification| notification.deliveries.collect(&:receiver)}.flatten
+          SimpleNotifications::Record.includes(deliveries: :receiver)
+              .collect(&:deliveries).flatten
+              .collect(&:receiver)
         end
 
         def read_marked_notificants
-          #TODO : Need to eager load
-          SimpleNotifications::Record.where(entity: self).collect {|notification| notification.deliveries.where(is_read: true).collect(&:receiver)}.flatten
+          SimpleNotifications::Record.includes(deliveries: :receiver)
+              .collect(&:deliveries).flatten
+              .select{|x| x.is_read}
+              .collect(&:receiver)
         end
 
         def unread_marked_notificants
-          #TODO : Need to eager load
-          SimpleNotifications::Record.where(entity: self).collect {|notification| notification.deliveries.where(is_read: false).collect(&:receiver)}.flatten
+          SimpleNotifications::Record.includes(deliveries: :receiver)
+              .collect(&:deliveries).flatten
+              .select{|x| !x.is_read}.collect(&:receiver)
         end
 
         # Mark notifications in read mode.
