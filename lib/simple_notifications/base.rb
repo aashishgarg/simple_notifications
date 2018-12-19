@@ -1,5 +1,5 @@
 module SimpleNotifications
-  module Basenotified_flag
+  module Base
     mattr_accessor :options, :notified_flag
 
     #Example
@@ -47,7 +47,7 @@ module SimpleNotifications
     def open_notified_class
       class_eval do
         prepend NotificationActions
-        attr_accessor :message, :notify_flag
+        attr_accessor :message, :notify
 
         # Define association for the notified model
         has_many :notifications, class_name: 'SimpleNotifications::Record', as: :entity
@@ -70,6 +70,7 @@ module SimpleNotifications
         # has_many :notificants, through: :notifications, source: :receivers
         # has_many :read_notificants, through: :read_deliveries, source: :receiver, source_type: 'User'
         # has_many :unread_notificants, through: :unread_deliveries, source: :receiver, source_type: 'User'
+
 
 
         # Callbacks
@@ -104,7 +105,7 @@ module SimpleNotifications
         #post.notify(sender: :author, receivers: :followers, message: 'My Custom logic message')
         #post.create(content: '', notify: false) -> It does not create the notification.
         def notify(options = {})
-          if notify_flag.present? && !!notify_flag
+          if notify.present? && !!notify
             raise 'SimpleNotification::SenderReceiverError' unless @@options[:sender] && @@options[:receivers]
             @message = options[:message] if options[:message]
             notification = notifications.build(entity: self, sender: get_obj(options[:sender]), message: default_message(self, get_obj(options[:sender]), 'created'))
@@ -162,33 +163,15 @@ module SimpleNotifications
         end
 
         def create_notification
-          if notify_flag.present?
-            if notify_flag == true
-              notify({sender: get_obj(@@options[:sender]), receivers: get_obj(@@options[:receivers]), message: default_message(self, get_obj(@@options[:sender]), 'created')})
-            end
-          else
-            notify({sender: get_obj(@@options[:sender]), receivers: get_obj(@@options[:receivers]), message: default_message(self, get_obj(@@options[:sender]), 'created')})
-          end
+          notify({sender: get_obj(@@options[:sender]), receivers: get_obj(@@options[:receivers]), message: default_message(self, get_obj(@@options[:sender]), 'created')})
         end
 
         def update_notification
-          if notify_flag.present?
-            if notify_flag == true
-              notify({sender: get_obj(@@options[:sender]), receivers: get_obj(@@options[:receivers]), message: default_message(self, get_obj(@@options[:sender]), 'updated')})
-            end
-          else
-            notify({sender: get_obj(@@options[:sender]), receivers: get_obj(@@options[:receivers]), message: default_message(self, get_obj(@@options[:sender]), 'updated')})
-          end
+          notify({sender: get_obj(@@options[:sender]), receivers: get_obj(@@options[:receivers]), message: default_message(self, get_obj(@@options[:sender]), 'updated')})
         end
 
         def destroy_notification
-          if notify_flag.present?
-            if notify_flag == true
-              notify({sender: get_obj(@@options[:sender]), receivers: get_obj(@@options[:receivers]), message: default_message(self, get_obj(@@options[:sender]), 'deleted')})
-            end
-          else
-            notify({sender: get_obj(@@options[:sender]), receivers: get_obj(@@options[:receivers]), message: default_message(self, get_obj(@@options[:sender]), 'deleted')})
-          end
+          notify({sender: get_obj(@@options[:sender]), receivers: get_obj(@@options[:receivers]), message: default_message(self, get_obj(@@options[:sender]), 'deleted')})
         end
       end
     end
