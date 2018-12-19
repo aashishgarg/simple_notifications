@@ -52,19 +52,6 @@ module SimpleNotifications
         # Define association for the notified model
         has_many :notifications, class_name: 'SimpleNotifications::Record', as: :entity
         has_many :notifiers, through: :notifications, source: :sender, source_type: sender_class(@@options[:sender]).to_s
-        SimpleNotifications::Record.class_eval do
-          [@@options[:entity_class].receivers_class(@@options[:receivers])].flatten.each do |receiver_class|
-            has_many "#{receiver_class.name.downcase}_receivers".to_sym,
-                     through: :deliveries,
-                     source: :receiver,
-                     source_type: receiver_class.name
-          end
-        end
-        [receivers_class(@@options[:receivers])].flatten.each do |receiver_class|
-          has_many "#{receiver_class.name.downcase}_notificants".to_sym,
-                   through: :notifications,
-                   source: "#{receiver_class.name.downcase}_receivers".to_sym
-        end
         has_many :read_deliveries, through: :notifications, source: :read_deliveries
         has_many :unread_deliveries, through: :notifications, source: :unread_deliveries
 
@@ -129,14 +116,14 @@ module SimpleNotifications
         def read_marked_notificants
           SimpleNotifications::Record.includes(deliveries: :receiver)
               .collect(&:deliveries).flatten
-              .select{|x| x.is_read}
+              .select{|record| record.is_read}
               .collect(&:receiver)
         end
 
         def unread_marked_notificants
           SimpleNotifications::Record.includes(deliveries: :receiver)
               .collect(&:deliveries).flatten
-              .select{|x| !x.is_read}.collect(&:receiver)
+              .select{|record| !record.is_read}.collect(&:receiver)
         end
 
         # Mark notifications in read mode.

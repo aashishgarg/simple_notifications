@@ -89,7 +89,6 @@ post.notify(sender: :author, receivers: :followers, message: 'My own message')
 post.notifications
 post.notifiers
 post.notificants
-post.#{receiver_class}_notificants
 post.read_marked_notificants
 post.unread_marked_notificants
 post.mark_read
@@ -114,7 +113,6 @@ follower.received_notifications
 ```ruby
 SimpleNotifications::Record.last.sender
 SimpleNotifications::Record.last.entity
-SimpleNotifications::Record.last.#{receiver_class.name.downcase}_receivers
 ```
 
 ### Skipping Notification
