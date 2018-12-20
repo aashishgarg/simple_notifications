@@ -1,4 +1,4 @@
-# SimpleNotifications
+# Simple Notifications
 
 A very simple gem providing the notifications functionality to any model in a Rails application.
 
