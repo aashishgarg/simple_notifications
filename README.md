@@ -36,12 +36,12 @@ Then run
 rails db:migrate
 ``` 
 
-Add following line to the model for which notifications functionality is required
+Add following line to the model for which notifications functionality is required. Here [Post] is the model which is the base for notification to happen i.e Event is performed on Post. 
 
 ```ruby
 notify sender: :author,
        receivers: :followers,
-       actions: [:follow, :unfollow, :update],
+       actions: [:follow, :unfollow, :update, :create, :destroy],
        notify_message: :message_method,
        before_notify: :before_notify_method,
        after_notify: :after_notify_method,
@@ -50,14 +50,16 @@ notify sender: :author,
        before_read: :before_read_method,
        after_read: :after_read_method
 ``` 
-Or you can provide ActiveRecord::Base object or ActiveRecord::Relation objects as 
+Here [receivers] will be notified that an event was done by [sender] on [post] entity with a message that is configurable.
+
+You can also provide ActiveRecord::Base object or ActiveRecord::Relation objects as 
 
 ```ruby
 notify sender: :author, receivers: User.all
 notify sender: User.first, receivers: [:followers, User.all]
 ```
 
-Here :sender and :followers should be associations for the model which needs to be notified.
+Here [:sender] is the [belongs_to] association with [:post] while :followers is the [:has_many] associations for the [:post] model through [:sender] model which needs to be notified.
 
 ### Notification Models
 
@@ -65,6 +67,7 @@ Here :sender and :followers should be associations for the model which needs to 
 SimpleNotifications::Record
 SimpleNotifications::Delivery
 ```
+Here assumption is that one event performed by [:sender] on entity [:post] will have one type of notification and it needs to be delivered to many [:receivers].
 
 ### Scopes
 
@@ -74,8 +77,7 @@ SimpleNotifications::Record.unread
 ```
 
 ### Methods
-Suppose **Post** is the notified model and **author** is the sender association and **followers** is the receiver association.
-Then following methods are available
+Following are the method available
 
 ```ruby
 Post.notified?
