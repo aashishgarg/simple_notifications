@@ -140,7 +140,7 @@ module SimpleNotifications
             @message = options[:message] if options[:message]
             notification = notifications.build(entity: self,
                                                sender: get_obj(options[:sender]),
-                                               action: '',
+                                               action: options[:action] || '',
                                                message: default_message(self, get_obj(options[:sender]), 'notified'))
             [get_obj(options[:receivers])].flatten.each {|receiver| notification.deliveries.build(receiver: receiver)}
             notification.save
