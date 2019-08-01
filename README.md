@@ -1,6 +1,9 @@
 # Simple Notifications
 
 A very simple gem providing the notifications functionality to any model in a Rails application.
+It does not provide the push notifications. 
+
+It creates all the models/migrations/associations/callbacks for you.
 
 ### Installation
 
@@ -20,46 +23,47 @@ Or install it yourself as:
 
 ### Usage
 
-Run the simple notifications generator
+* First run the simple notifications generator to generate two files in your rails project
+
+    * simple_notifications.rb - An initializer file.
+    * Migration files - Required for recording notifications.
 
 ```ruby
 rails generate simple_notifications:install
 ```
-This will generate two files in your rails project
 
-* simple_notifications.rb - An initializer file.
-* Migration files - Required for recording notifications.
-
-Then run
+* Migrate Database
 
 ```ruby
 rails db:migrate
 ``` 
 
-Add following line to the model for which notifications functionality is required. Here [Post] is the model which is the base for notification to happen i.e Event is performed on Post. 
+Add the following line to the model for which notifications functionality is required.
+Here [Post] is the model which is the base for notification to happen i.e Event is performed on Post. 
 
 ```ruby
-notify sender: :author,
-       receivers: :followers,
-       actions: [:follow, :unfollow, :update, :create, :destroy],
-       notify_message: :message_method,
-       before_notify: :before_notify_method,
-       after_notify: :after_notify_method,
-       before_delivered: :before_delivered_method,
-       after_delivered: :after_delivered_method,
-       before_read: :before_read_method,
-       after_read: :after_read_method
+acts_as_notifier   sender: :author,
+                   receivers: :followers,
+                   actions: [:follow, :unfollow, :update, :create, :destroy],
+                   notify_message: :message_method,
+                   before_notify: :before_notify_method,
+                   after_notify: :after_notify_method,
+                   before_delivered: :before_delivered_method,
+                   after_delivered: :after_delivered_method,
+                   before_read: :before_read_method,
+                   after_read: :after_read_method
 ``` 
 Here [receivers] will be notified that an event was done by [sender] on [post] entity with a message that is configurable.
 
 You can also provide ActiveRecord::Base object or ActiveRecord::Relation objects as 
 
 ```ruby
-notify sender: :author, receivers: User.all
-notify sender: User.first, receivers: [:followers, User.all]
+acts_as_notifier sender: :author, receivers: User.all, actions: [:create]
+acts_as_notifier sender: User.first, receivers: [:followers, User.all], actions: [:create]
 ```
 
-Here [:sender] is the [belongs_to] association with [:post] while :followers is the [:has_many] associations for the [:post] model through [:sender] model which needs to be notified.
+Here [:sender] is the [belongs_to] association with [:post] while :followers is the [:has_many] associations for the 
+[:post] model through [:sender] model which needs to be notified.
 
 ### Notification Models
 
@@ -67,7 +71,8 @@ Here [:sender] is the [belongs_to] association with [:post] while :followers is 
 SimpleNotifications::Record
 SimpleNotifications::Delivery
 ```
-Here assumption is that one event performed by [:sender] on entity [:post] will have one type of notification and it needs to be delivered to many [:receivers].
+Here assumption is that one event performed by [:sender] on entity [:post] will have one type of notification 
+and it needs to be delivered to many [:receivers].
 
 ### Scopes
 
