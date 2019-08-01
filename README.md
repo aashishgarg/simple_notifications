@@ -38,7 +38,7 @@ rails generate simple_notifications:install
 rails db:migrate
 ``` 
 
-Add the following line to the model for which notifications functionality is required.
+Add the following line to the model(after all the associations defined) for which notifications functionality is required.
 Here [Post] is the model which is the base for notification to happen i.e Event is performed on Post. 
 
 ```ruby
