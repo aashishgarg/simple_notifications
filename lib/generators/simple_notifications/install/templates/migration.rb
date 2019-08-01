@@ -3,6 +3,7 @@ class CreateSimpleNotifications < ActiveRecord::Migration[5.2]
     create_table(:simple_notifications) do |t|
       t.references :sender, polymorphic: true
       t.references :entity, polymorphic: true
+      t.string :action
       t.string :message
 
       t.timestamps
