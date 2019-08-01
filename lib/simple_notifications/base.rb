@@ -74,7 +74,7 @@ module SimpleNotifications
         # Callbacks
         # after_create_commit :create_notification
         Base.options[:callbacks].each do |callback|
-          send("after_#{callback}_commit", "#{callback}_notification")
+          send("after_#{callback}_commit".to_sym, "#{callback}_notification")
         end
 
         def create_notification
