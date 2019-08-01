@@ -93,7 +93,7 @@ module SimpleNotifications
             raise 'SimpleNotification::SenderReceiverError' unless @@options[:sender] && @@options[:receivers]
             @message = options[:message] if options[:message]
             notification = notifications.build(entity: self, sender: get_obj(options[:sender]), message: default_message(self, get_obj(options[:sender]), 'created'))
-            get_obj(options[:receivers]).each {|receiver| notification.deliveries.build(receiver: receiver)}
+            [get_obj(options[:receivers])].flatten.each {|receiver| notification.deliveries.build(receiver: receiver)}
             notification.save
           end
         end
